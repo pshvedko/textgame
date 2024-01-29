@@ -2,6 +2,7 @@ package student
 
 import (
 	"fmt"
+	"runtime"
 	"strings"
 )
 
@@ -23,6 +24,7 @@ func (g *Game) HandleCommand(command string) string {
 		return fmt.Sprintf("нет пути в %s", path[1])
 	case len(path) == 2 && path[0] == "взять":
 		if g.Pop(path[1]) {
+			g.Put(path[1])
 			return fmt.Sprintf("предмет добавлен в инвентарь: %s", path[1])
 		}
 		return "нет такого"
@@ -39,8 +41,15 @@ type Location interface {
 	Pop(string) bool
 }
 
+type Inventory []string
+
 type Person struct {
 	Location
+	Inventory
+}
+
+func (i *Inventory) Put(item string) {
+	*i = append(*i, item)
 }
 
 type Route []Location
@@ -194,9 +203,17 @@ func New() *Game {
 	street.Route = Route{&corridor}
 	corridor.Route = Route{&kitchen, &room, &street}
 	kitchen.Route = Route{&corridor}
-	return &Game{
+	game := &Game{
 		Person: Person{
 			Location: &kitchen,
 		},
 	}
+	// убираем перекрестные ссылки чтобы сработал сборщик мусора для всех Location
+	runtime.SetFinalizer(game, func(*Game) {
+		corridor.Route = nil
+		kitchen.Route = nil
+		street.Route = nil
+		room.Route = nil
+	})
+	return game
 }
