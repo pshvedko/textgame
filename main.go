@@ -15,8 +15,8 @@ func main() {
 		очень круто будет сделать построчный ввод команд тут, хотя это и не требуется по заданию
 	*/
 	initGame()
+	r := bufio.NewReader(os.Stdin)
 	for {
-		r := bufio.NewReader(os.Stdin)
 		fmt.Print("> ")
 		command, err := r.ReadString('\n')
 		if err != nil {
